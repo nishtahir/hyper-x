@@ -1,0 +1,10 @@
+[package]
+name = "example"
+version = "0.0.0"
+authors = ["Nish Tahir <nishtahir@outlook.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+hyperx = { path = "../" }
+reqwest = "0.9.15"

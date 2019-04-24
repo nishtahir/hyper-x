@@ -1,0 +1,19 @@
+[package]
+name = "hyperx"
+version = "0.1.0"
+authors = ["Nish Tahir <nishtahir@outlook.com>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[workspace]
+members = ["hyperx-attr", "example"]
+
+[dependencies]
+hyper = "0.12"
+proc-macro2 = "0.4"
+quote = "0.6"
+darling = "0.9.0"
+syn = {version = "0.15.32", features = ["full", "fold", "parsing", "extra-traits"]}
+hyperx-attr = { path = "hyperx-attr" }
