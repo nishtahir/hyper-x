@@ -51,9 +51,18 @@ struct Param {
 }
 
 #[proc_macro_attribute]
-pub fn http_client(_attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn http_client(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let client_ident = match attr.into_iter().nth(0) {
+        Some(proc_macro::TokenTree::Ident(token)) => {
+            Ident::new(&token.to_string(), token.span().into())
+        }
+        _ => {
+            return syn::Error::new(Span::call_site(), "Missing implementation name")
+                .to_compile_error()
+                .into()
+        }
+    };
     let input_trait = syn::parse_macro_input!(item as ItemTrait);
-    let trait_ident = input_trait.ident;
 
     let mut methods = vec![];
 
@@ -69,14 +78,7 @@ pub fn http_client(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 let params = parse_method_params(&method_signature);
 
                 let segments = args.attributes.path;
-                let fmt_args = params
-                    .iter()
-                    .filter(|p| segments.contains(&format!("{{{}}}", p.ident.to_string())))
-                    .map(move |p| {
-                        let ident = &p.ident;
-                        quote! { #ident = #ident }
-                    })
-                    .collect::<Vec<proc_macro2::TokenStream>>();
+                let fmt_args = get_url_fmt_args(&params, &segments);
 
                 let build_url = quote! {
                     let path_segments = format!(#segments, #(#fmt_args),*);
@@ -133,30 +135,38 @@ pub fn http_client(_attr: TokenStream, item: TokenStream) -> TokenStream {
                     },
                     _ => unimplemented!(),
                 };
-                // println!("{}", method);
                 methods.push(method);
-                // println!("{:?}", method.to_string());
             }
             _ => {}
         }
     }
 
     let res = quote! {
-        struct #trait_ident {
+        struct #client_ident {
             root: String,
             client: reqwest::Client
         }
-        impl #trait_ident {
+        impl #client_ident {
             fn new<S: Into<String>>(root: S, client: reqwest::Client) -> Self {
-                #trait_ident { root: root.into(), client: client }
+                #client_ident { root: root.into(), client: client }
             }
             #(#methods)*
         }
 
     };
 
-    println!("{}", res);
     res.into()
+}
+
+fn get_url_fmt_args(params: &Vec<Param>, segments: &String) -> Vec<proc_macro2::TokenStream> {
+    params
+        .iter()
+        .filter(|p| segments.contains(&format!("{{{}}}", p.ident.to_string())))
+        .map(move |p| {
+            let ident = &p.ident;
+            quote! { #ident = #ident }
+        })
+        .collect::<Vec<proc_macro2::TokenStream>>()
 }
 
 fn parse_method_params(method: &MethodSig) -> Vec<Param> {

@@ -5,7 +5,7 @@ A proof of concept `proc_macro` based HTTP client.
 Hyper-X allows you to define your HTTP client as a `trait`
 
 ``` rust
-#[http_client]
+#[http_client(JsonPlaceholderApiClient)]
 trait JsonPlaceholderApi {
     #[get(path = "/comments?postId={post_id}")]
     fn get_comments(&self, post_id: i32) -> Result<Response>;
@@ -19,11 +19,11 @@ Hyper-X generates a struct and implementation with common boiler plate generated
 for you behind the scenes.
 
 ``` rust
-struct JsonPlaceholderApi {
+struct JsonPlaceholderApiClient {
     root: String,
     client: reqwest::Client,
 }
-impl JsonPlaceholderApi {
+impl JsonPlaceholderApiClient {
     fn new<S: Into<String>>(root: S, client: reqwest::Client) -> Self {
         JsonPlaceholderApi {
             root: root.into(),
@@ -49,7 +49,14 @@ impl JsonPlaceholderApi {
 
 ## Api declaration
 
-Every request method must have an http annotation that contains the method
+Your trait must be declared with a `http_client(...)` attribute
+
+```
+#[http_client(JsonPlaceholderApiClient)]
+trait JsonPlaceholderApi
+```
+
+Every request method must have an http attribute that contains the method
 and path.
 
 ``` rust
@@ -71,3 +78,20 @@ Request body is declared using the `data` attribute
 fn create_post(&self, data: String) -> Result<Response>;
 ```
 
+# License
+
+```
+   Copyright 2019 Nish Tahir
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+```
